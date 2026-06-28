@@ -32,13 +32,36 @@ npx agent-session-kill
 ## Commands
 
 ```bash
-agent-session-kill                         # interactive picker
-agentkill                                  # short alias
-agent-session-kill interactive             # explicit picker
-agent-session-kill scan --older-than 14d   # non-interactive inventory
-agent-session-kill scan --json             # machine-readable inventory
-agent-session-kill clean --dry-run         # non-interactive dry run
-agent-session-kill clean --apply           # apply non-interactive manifest
+# Interactive picker (default)
+agent-session-kill
+agentkill                                           # short alias
+
+# Limit to specific tools
+agent-session-kill --tool copilot                   # Copilot Chat only
+agent-session-kill --tool claude,omp                # multiple tools
+
+# Orphan detection — OMP sessions for deleted projects trashed regardless of age
+agent-session-kill --workspace ~/workspace
+
+# Include cache files as cleanup candidates
+agent-session-kill --include-cache
+
+# Non-interactive inventory
+agent-session-kill scan                             # table output
+agent-session-kill scan --json                      # machine-readable
+agent-session-kill scan --tool copilot --json       # scoped to one tool
+agent-session-kill scan --older-than 7d             # tighter age threshold
+
+# Dry-run manifest (print what would be deleted)
+agent-session-kill clean --dry-run
+agent-session-kill clean --dry-run --include-cache  # include cache in preview
+
+# Apply cleanup
+agent-session-kill clean --apply                    # trash (recoverable)
+agent-session-kill clean --apply --permanent        # permanent delete
+
+# Delegate cleanup to native tools (claude project purge, omp worktree clear)
+agent-session-kill clean --dry-run --delegates
 ```
 
 ## Interactive controls
