@@ -47,7 +47,7 @@ function render(state, io) {
   const end = Math.min(rows.length, start + windowSize);
 
   io.stdout.write("\x1b[2J\x1b[H");
-  io.stdout.write(`${chalk.bold("Agent Remnant Cleaner")}\n`);
+  io.stdout.write(`${chalk.bold("Agent Session Kill")}\n`);
   io.stdout.write(`${chalk.dim("↑/↓ j/k move · space toggle · a all · d/delete apply selected · r rescan · q/esc quit")}\n\n`);
 
   if (rows.length === 0) {

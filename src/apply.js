@@ -15,7 +15,7 @@ function normalizeManifest(input) {
 
 function defaultTrashDir(options) {
   const homeDir = options?.homeDir ? path.resolve(options.homeDir) : os.homedir();
-  return path.join(homeDir, ".Trash", "agent-remnant-cleaner");
+  return path.join(homeDir, ".Trash", "agent-session-kill");
 }
 
 function trashPathFor(entry, trashDir) {

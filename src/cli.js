@@ -52,8 +52,8 @@ export function buildProgram() {
   };
 
   program
-    .name("agent-remnant-cleaner")
-    .description("NPKILL-style cleanup for agent session remnants")
+    .name("agent-session-kill")
+    .description("NPKILL-style cleanup for Claude, Pi, and OMP agent session remnants")
     .exitOverride()
     .allowExcessArguments(false)
     .option("--older-than <duration>", "minimum age to consider stale", "14d")

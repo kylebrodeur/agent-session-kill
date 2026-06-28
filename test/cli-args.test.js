@@ -54,7 +54,7 @@ describe("main", () => {
     });
 
     assert.equal(exitCode, 0);
-    assert.match(stdout, /interactive/);
+    assert.match(stdout, /agent-session-kill/);
   });
 
   it("fails fast for default interactive mode without a TTY", async () => {
@@ -67,6 +67,17 @@ describe("main", () => {
 
     assert.equal(exitCode, 1);
     assert.match(stderr, /requires a TTY/);
+  });
+
+  it("uses public package name in help output", async () => {
+    let stdout = "";
+    const exitCode = await main(["--help"], {
+      stdout: { write(text) { stdout += text; } },
+      stderr: { write() {} },
+    });
+
+    assert.equal(exitCode, 0);
+    assert.match(stdout, /agent-session-kill/);
   });
 
   it("prints the manifest before applying cleanup", async () => {
