@@ -1,0 +1,49 @@
+{
+  "name": "agent-session-kill",
+  "version": "0.1.0",
+  "description": "NPKILL-style cleanup for Claude, Pi, and OMP agent session remnants.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kyle Brodeur",
+  "homepage": "https://github.com/kylebrodeur/agent-session-kill#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kylebrodeur/agent-session-kill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kylebrodeur/agent-session-kill/issues"
+  },
+  "keywords": [
+    "claude-code",
+    "oh-my-pi",
+    "pi",
+    "sessions",
+    "cleanup",
+    "agent",
+    "tui",
+    "npkill"
+  ],
+  "bin": {
+    "agent-session-kill": "./src/cli.js",
+    "agentkill": "./src/cli.js"
+  },
+  "files": [
+    "src/*.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "scan": "node src/cli.js scan",
+    "interactive": "node src/cli.js",
+    "clean:dry-run": "node src/cli.js clean --dry-run",
+    "prepack": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2"
+  }
+}
