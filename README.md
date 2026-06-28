@@ -2,7 +2,7 @@
 
 NPKILL-style cleanup for AI coding-agent session remnants.
 
-`agent-session-kill` scans local Claude Code, Pi/pi-mono, Oh My Pi (OMP), and subagent temp storage, then lets you review and delete stale session artifacts from an interactive terminal UI.
+`agent-session-kill` scans local Claude Code, Pi/pi-mono, Oh My Pi (OMP), GitHub Copilot Chat, and subagent temp storage, then lets you review and delete stale session artifacts from an interactive terminal UI.
 
 ## Why
 
@@ -63,12 +63,13 @@ Rows that are protected or kept are visible but not selectable.
 | Option | Description | Default |
 | --- | --- | --- |
 | `--older-than <duration>` | Minimum age for stale artifacts. Supports `m`, `h`, `d`. | `14d` |
-| `--tool <name>` | Limit to `claude`, `pi`, `omp`, or `temp`. Repeat or comma-separate. | all |
+| `--tool <name>` | Limit to `claude`, `pi`, `omp`, `temp`, or `copilot`. Repeat or comma-separate. | all |
 | `--include-cache` | Include cache roots as cleanup candidates. | off |
 | `--json` | Print JSON. Always non-interactive. | off |
 | `--delegates` | Run delegated dry-runs (`claude project purge`, `omp worktree clear`). | off |
 | `--home <path>` | Home directory to scan. | current user home |
 | `--temp <path>` | Temp directory to scan. | OS temp dir |
+| `--workspace <path>` | Workspace directory; OMP sessions for projects no longer on disk are flagged as orphaned and trashed regardless of age (scans 2 levels deep). | off |
 | `--dry-run` | Force dry-run mode. | off |
 | `--apply` | Apply cleanup in `clean` mode. | off |
 | `--permanent` | Permanently delete instead of trashing. | off |
@@ -106,6 +107,16 @@ Claude project transcripts under `~/.claude/projects/` are protected from direct
 
 OMP worktrees are handled through `omp worktree clear --dry-run` when delegates are enabled.
 
+### GitHub Copilot Chat (VS Code)
+
+- `ask-agent/`, `plan-agent/`, `explore-agent/`, `logContextRecordings/`, `memory-tool/`
+- `copilot.cli.oldGlobalSessions.json`
+- `copilot.cli.workspaceSessions.*.json`
+- `commandEmbeddings.json`, `settingEmbeddings.json`, `toolEmbeddingsCache.bin`, `copilot-cli-images/` only when `--include-cache` is set
+
+macOS path: `~/Library/Application Support/Code/User/globalStorage/github.copilot-chat`
+Linux path: `~/.config/Code/User/globalStorage/github.copilot-chat`
+
 ### Subagent temp runs
 
 - `<temp>/pi-subagents-*/chain-runs/`
@@ -132,6 +143,9 @@ Examples:
 - `~/.omp/agent/config.yml`
 - `~/.omp/agent/managed-skills/`
 - `~/.omp/agent/memories/`
+- `~/.../github.copilot-chat/api.json`
+- `~/.../github.copilot-chat/mcpServers.json`
+- `~/.../github.copilot-chat/debugCommand`
 
 ## Safety model
 

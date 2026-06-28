@@ -1,4 +1,4 @@
-export type ToolName = "claude" | "pi" | "omp" | "temp";
+export type ToolName = "claude" | "pi" | "omp" | "temp" | "copilot";
 export type EntryType = "file" | "directory";
 export type Action = "keep" | "trash" | "delete" | "delegate";
 
@@ -11,6 +11,7 @@ export interface CleanerOptions {
   apply: boolean;
   permanent: boolean;
   tools: Set<ToolName>;
+  workspaceDir?: string;
 }
 
 export interface ManifestEntry {

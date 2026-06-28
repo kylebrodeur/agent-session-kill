@@ -9,6 +9,7 @@ const roots = {
   ompDir: "/home/user/.omp",
   ompAgentDir: "/home/user/.omp/agent",
   tempDir: "/private/tmp",
+  copilotChatDir: "/home/user/Library/Application Support/Code/User/globalStorage/github.copilot-chat",
 };
 
 describe("isProtectedPath", () => {
@@ -48,6 +49,18 @@ describe("isProtectedPath", () => {
     assert.equal(isProtectedPath("/home/user/.claude/tasks/task.json", roots), false);
     assert.equal(isProtectedPath("/home/user/.pi/agent/sessions/project/session.jsonl", roots), false);
     assert.equal(isProtectedPath("/home/user/.omp/agent/sessions/project/session.jsonl", roots), false);
+  });
+
+  it("protects Copilot api.json, debugCommand, and mcpServers.json", () => {
+    const base = roots.copilotChatDir;
+    assert.equal(isProtectedPath(`${base}/api.json`, roots), true);
+    assert.equal(isProtectedPath(`${base}/debugCommand`, roots), true);
+    assert.equal(isProtectedPath(`${base}/mcpServers.json`, roots), true);
+  });
+  it("does not protect Copilot session dirs or workspace session files", () => {
+    const base = roots.copilotChatDir;
+    assert.equal(isProtectedPath(`${base}/ask-agent/file.json`, roots), false);
+    assert.equal(isProtectedPath(`${base}/copilot.cli.workspaceSessions.abc.json`, roots), false);
   });
 });
 
@@ -90,5 +103,11 @@ describe("classifyPath", () => {
       cache: false,
       protected: false,
     });
+  });
+
+  it("classifies Copilot cache files as cache", () => {
+    const result = classifyPath(`${roots.copilotChatDir}/commandEmbeddings.json`, roots, false);
+    assert.equal(result.cache, true);
+    assert.equal(result.protected, true);
   });
 });

@@ -39,7 +39,7 @@ function scanOptions({ homeDir, tempDir, includeCache }) {
     includeCache,
     apply: false,
     permanent: false,
-    tools: new Set(["claude", "pi", "omp", "temp"]),
+    tools: new Set(["claude", "pi", "omp", "temp", "copilot"]),
   };
 }
 
@@ -172,6 +172,110 @@ describe("scanRemnants", () => {
       const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
 
       assert.equal(entryFor(results, chainFile)?.action, "trash");
+    });
+  });
+
+  it("marks old Copilot ask-agent files for trash", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const chatFile = path.join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "github.copilot-chat", "ask-agent", "chat.json");
+
+      await writeOldFile(chatFile, '{"session":"stale"}\n');
+
+      const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+
+      assert.equal(entryFor(results, chatFile)?.action, "trash");
+    });
+  });
+
+  it("keeps Copilot commandEmbeddings by default and trashes it when cache is opted in", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const cacheFile = path.join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "github.copilot-chat", "commandEmbeddings.json");
+
+      await writeOldFile(cacheFile, "cache\n");
+
+      const keptResults = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+      const trashedResults = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: true }));
+
+      assert.equal(entryFor(keptResults, cacheFile)?.action, "keep");
+      assert.equal(entryFor(trashedResults, cacheFile)?.action, "trash");
+    });
+  });
+
+  it("marks old Copilot workspace session files for trash", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const wsFile = path.join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "github.copilot-chat", "copilot.cli.workspaceSessions.abc123.json");
+
+      await writeOldFile(wsFile, '{"ws":"stale"}\n');
+
+      const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+
+      assert.equal(entryFor(results, wsFile)?.action, "trash");
+    });
+  });
+
+  it("keeps Copilot api.json even when old (protected path)", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const apiFile = path.join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "github.copilot-chat", "api.json");
+
+      await writeOldFile(apiFile, '{"api":"key"}\n');
+
+      const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+      const entry = entryFor(results, apiFile);
+
+      if (entry) {
+        assert.equal(entry.action, "keep");
+        assert.equal(entry.protected, true);
+      }
+    });
+  });
+
+  it("orphan detection: trashes new OMP session for a project no longer on disk", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      // Create workspace dir but NOT project-deleted inside it
+      const workspaceDir = path.join(homeDir, "workspace");
+      await mkdir(workspaceDir, { recursive: true });
+
+      // The session dir encodes: homeDir + "/workspace/project-deleted"
+      const sessionDir = path.join(homeDir, ".omp", "agent", "sessions", "-workspace-project-deleted");
+      const sessionFile = path.join(sessionDir, "session.jsonl");
+
+      // Write with a CURRENT (non-old) mtime so age alone would keep it
+      await mkdir(sessionDir, { recursive: true });
+      await writeFile(sessionFile, '{"event":"live"}\n');
+
+      const results = await scanRemnants({
+        ...scanOptions({ homeDir, tempDir, includeCache: false }),
+        workspaceDir,
+      });
+      const entry = entryFor(results, sessionFile);
+
+      assert.equal(entry?.action, "trash");
+      assert.equal(entry?.reason, "orphaned session");
+    });
+  });
+
+  it("orphan detection: keeps new OMP session for a project still on disk", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      // Create workspace dir AND the project dir
+      const workspaceDir = path.join(homeDir, "workspace");
+      const projectDir = path.join(workspaceDir, "exists");
+      await mkdir(projectDir, { recursive: true });
+
+      // Session dir encodes: homeDir + "/workspace/exists"
+      const sessionDir = path.join(homeDir, ".omp", "agent", "sessions", "-workspace-exists");
+      const sessionFile = path.join(sessionDir, "session.jsonl");
+
+      // Write with a CURRENT (non-old) mtime
+      await mkdir(sessionDir, { recursive: true });
+      await writeFile(sessionFile, '{"event":"live"}\n');
+
+      const results = await scanRemnants({
+        ...scanOptions({ homeDir, tempDir, includeCache: false }),
+        workspaceDir,
+      });
+      const entry = entryFor(results, sessionFile);
+
+      assert.equal(entry?.action, "keep");
     });
   });
 });

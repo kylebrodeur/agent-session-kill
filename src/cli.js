@@ -9,7 +9,7 @@ import { formatJson, formatTable } from "./format.js";
 import { scanRemnants } from "./scanner.js";
 import { applyManifest } from "./apply.js";
 import { runInteractive } from "./interactive.js";
-const TOOLS = new Set(["claude", "pi", "omp", "temp"]);
+const TOOLS = new Set(["claude", "pi", "omp", "temp", "copilot"]);
 
 function usage() {
   return buildProgram().helpInformation().trimEnd();
@@ -38,6 +38,7 @@ function buildDefaultOptions() {
     tempDir: os.tmpdir(),
     dryRun: false,
     tools: new Set(TOOLS),
+    workspaceDir: undefined,
   };
 }
 
@@ -53,16 +54,17 @@ export function buildProgram() {
 
   program
     .name("agent-session-kill")
-    .description("NPKILL-style cleanup for Claude, Pi, and OMP agent session remnants")
+    .description("NPKILL-style cleanup for Claude, Pi, OMP, and Copilot agent session remnants")
     .exitOverride()
     .allowExcessArguments(false)
     .option("--older-than <duration>", "minimum age to consider stale", "14d")
-    .option("--tool <name>", "limit to claude, pi, omp, or temp; repeat or comma-separate", collectTools, [])
+    .option("--tool <name>", "limit to claude, pi, omp, temp, or copilot; repeat or comma-separate", collectTools, [])
     .option("--include-cache", "include cache roots in cleanup candidates", false)
     .option("--json", "print JSON instead of a table", false)
     .option("--delegates", "run delegate dry-run cleanup commands", false)
     .option("--home <path>", "home directory to scan", os.homedir())
     .option("--temp <path>", "temp directory to scan", os.tmpdir())
+    .option("--workspace <path>", "workspace directory for orphan detection")
     .option("--dry-run", "force dry-run mode", false)
     .option("--permanent", "permanently delete instead of trash", false);
 
@@ -112,6 +114,7 @@ export function parseCliArgs(argv) {
     tempDir: parsed.temp,
     dryRun: parsed.dryRun,
     tools: parsed.tool.length > 0 ? new Set(parsed.tool) : new Set(TOOLS),
+    workspaceDir: parsed.workspace,
   };
 
   if (options.dryRun) {
@@ -156,6 +159,7 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
       apply: false,
       permanent: options.permanent,
       tools: options.tools,
+      workspaceDir: options.workspaceDir,
     }, {
       stdin,
       stdout,
@@ -172,6 +176,7 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
     apply: options.apply,
     permanent: options.permanent,
     tools: options.tools,
+    workspaceDir: options.workspaceDir,
   });
 
   if (args.command === "clean" && !options.apply) {

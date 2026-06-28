@@ -1,7 +1,7 @@
 {
   "name": "agent-session-kill",
-  "version": "0.1.0",
-  "description": "NPKILL-style cleanup for Claude, Pi, and OMP agent session remnants.",
+  "version": "0.2.0",
+  "description": "NPKILL-style cleanup for Claude, Pi, OMP, and GitHub Copilot Chat agent session remnants.",
   "type": "module",
   "license": "MIT",
   "author": "Kyle Brodeur",
@@ -15,6 +15,8 @@
   },
   "keywords": [
     "claude-code",
+    "github-copilot",
+    "copilot",
     "oh-my-pi",
     "pi",
     "sessions",

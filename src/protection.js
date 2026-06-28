@@ -15,6 +15,7 @@ const PROTECTED_ROOT_NAMES = new Set([
 ]);
 
 const PROTECTED_FILE_PATTERNS = [
+  /^api\b/i,
   /^auth\b/i,
   /^settings\b/i,
   /^config\b/i,
@@ -100,6 +101,10 @@ function isCachePath(candidate, roots) {
     path.join(roots.piAgentDir, "cache"),
     path.join(roots.ompDir, "cache"),
     path.join(roots.ompAgentDir, "cache"),
+    path.join(roots.copilotChatDir, "commandEmbeddings.json"),
+    path.join(roots.copilotChatDir, "settingEmbeddings.json"),
+    path.join(roots.copilotChatDir, "toolEmbeddingsCache.bin"),
+    path.join(roots.copilotChatDir, "copilot-cli-images"),
   ].some((root) => isInside(candidate, root));
 }
 
@@ -110,6 +115,14 @@ export function isProtectedPath(candidate, roots) {
 
   if (classifyRemnant(candidate, roots)) {
     return false;
+  }
+
+  if (isInside(candidate, roots.copilotChatDir)) {
+    const absCandidate = absolute(candidate);
+    const absBase = absolute(roots.copilotChatDir);
+    if (absCandidate === path.join(absBase, "debugCommand")) return true;
+    if (absCandidate === path.join(absBase, "mcpServers.json")) return true;
+    return isProtectedUnderRoot(candidate, roots.copilotChatDir);
   }
 
   return [roots.claudeDir, roots.piAgentDir, roots.ompAgentDir].some((root) => isProtectedUnderRoot(candidate, root));
