@@ -24,8 +24,8 @@
     "npkill"
   ],
   "bin": {
-    "agent-session-kill": "./src/cli.js",
-    "agentkill": "./src/cli.js"
+    "agent-session-kill": "src/cli.js",
+    "agentkill": "src/cli.js"
   },
   "files": [
     "src/*.js",
