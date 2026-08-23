@@ -1,6 +1,6 @@
 {
   "name": "agent-session-kill",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "NPKILL-style cleanup for Claude, Pi, OMP, and GitHub Copilot Chat agent session remnants.",
   "type": "module",
   "license": "MIT",
