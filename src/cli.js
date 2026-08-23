@@ -2,14 +2,17 @@
 import os from "node:os";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { realpathSync, readFileSync } from "node:fs";
 import { Command } from "commander";
 import { parseDurationMs } from "./age.js";
 import { runDelegateDryRuns } from "./delegates.js";
 import { formatJson, formatTable } from "./format.js";
 import { scanRemnants } from "./scanner.js";
 import { applyManifest } from "./apply.js";
-import { runInteractive } from "./interactive.js";
 const TOOLS = new Set(["claude", "pi", "omp", "temp", "copilot"]);
+const PKG_VERSION = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+).version;
 
 function usage() {
   return buildProgram().helpInformation().trimEnd();
@@ -55,6 +58,7 @@ export function buildProgram() {
   program
     .name("agent-session-kill")
     .description("NPKILL-style cleanup for Claude, Pi, OMP, and Copilot agent session remnants")
+    .version(PKG_VERSION)
     .exitOverride()
     .allowExcessArguments(false)
     .option("--older-than <duration>", "minimum age to consider stale", "14d")
@@ -94,6 +98,9 @@ export function parseCliArgs(argv) {
   } catch (error) {
     if (error?.code === "commander.helpDisplayed") {
       return toCliArgs("interactive", { ...defaults, help: true });
+    }
+    if (error?.code === "commander.version") {
+      return toCliArgs("interactive", { ...defaults, version: true });
     }
     throw new Error(error.message);
   }
@@ -138,6 +145,10 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
   const { options } = args;
   if (options.help) {
     io.stdout.write(`${usage()}\n`);
+    return 0;
+  }
+  if (options.version) {
+    io.stdout.write(`${PKG_VERSION}\n`);
     return 0;
   }
 
@@ -208,7 +219,22 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
   return results.errors.length > 0 ? 1 : 0;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Run when this file is the process entry point. process.argv[1] is the path
+// Node was launched with — for a `bin` install that's the .bin/ symlink, not
+// this file — so realpath both sides before comparing, or `main()` never fires
+// (the v0.2.0 bug: every command silently no-op'd when installed as a CLI).
+function isEntryPoint() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  const modulePath = fileURLToPath(import.meta.url);
+  try {
+    return realpathSync(entry) === realpathSync(modulePath);
+  } catch {
+    return entry === modulePath;
+  }
+}
+
+if (isEntryPoint()) {
   main().then((exitCode) => {
     process.exitCode = exitCode;
   }).catch((error) => {
