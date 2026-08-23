@@ -1,5 +1,9 @@
 # Agent Session Kill
 
+[![npm version](https://img.shields.io/npm/v/agent-session-kill.svg)](https://www.npmjs.com/package/agent-session-kill)
+[![node](https://img.shields.io/node/v/agent-session-kill.svg)](https://www.npmjs.com/package/agent-session-kill)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 NPKILL-style cleanup for AI coding-agent session remnants.
 
 `agent-session-kill` scans local Claude Code, Pi/pi-mono, Oh My Pi (OMP), GitHub Copilot Chat, and subagent temp storage, then lets you review and delete stale session artifacts from an interactive terminal UI.
@@ -194,6 +198,21 @@ node src/cli.js scan --tool claude
 node src/cli.js clean --dry-run --tool claude
 node src/cli.js scan --json --tool claude
 ```
+
+## Used by
+
+[`mac-optimize`](https://github.com/kylebrodeur/mac-optimize)'s `mac-reclaim --deep` **delegates agent-transcript cleanup to `agent-session-kill` when it's installed** — trash-first deletion and the protection lists here are safer than a reclaim script re-implementing them. Install this globally (`npm i -g agent-session-kill`) and `mac-reclaim` picks it up automatically.
+
+## The family
+
+Part of a small family of tools for keeping machines healthy when they run fleets of AI coding agents:
+
+| Repo | What |
+|---|---|
+| **agent-session-kill** (this) | Node/npm TUI that reviews and deletes stale agent session remnants (Claude, Pi, OMP, Copilot Chat). |
+| [`mac-optimize`](https://github.com/kylebrodeur/mac-optimize) | macOS disk/memory/shell hygiene — safe cache reclaim, git-worktree audit, Codex-session backup, and launchd watchers. Delegates to this tool. |
+| [`wsl-optimize`](https://github.com/kylebrodeur/wsl-optimize) | The WSL2 sibling — OOM forensics, cgroup bounds, and `vhdx` compaction. |
+| [`agent-machine-lib`](https://github.com/kylebrodeur/agent-machine-lib) | Shared bash primitives the two optimize repos vendor. |
 
 ## License
 
