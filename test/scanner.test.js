@@ -91,9 +91,87 @@ describe("scanRemnants", () => {
       await writeOldFile(piCacheFile, "cached\n");
 
       const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+      const claudeCacheEntry = entryFor(results, claudeCacheFile);
+      const piCacheEntry = entryFor(results, piCacheFile);
 
-      assert.equal(entryFor(results, claudeCacheFile)?.action, "keep");
-      assert.equal(entryFor(results, piCacheFile)?.action, "keep");
+      assert.equal(claudeCacheEntry?.action, "keep");
+      assert.equal(piCacheEntry?.action, "keep");
+    });
+  });
+
+  it("scans a custom OMP session dir from options and ignores the default location", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const customDir = path.join(homeDir, "elsewhere", "omp-sessions");
+      const customFile = path.join(customDir, "old-session.jsonl");
+      const defaultFile = path.join(homeDir, ".omp", "agent", "sessions", "old.jsonl");
+
+      await writeOldFile(customFile, '{"session":"old"}\n');
+      await writeOldFile(defaultFile, '{"session":"old"}\n');
+
+      const results = await scanRemnants({
+        ...scanOptions({ homeDir, tempDir, includeCache: false }),
+        ompSessionsDir: customDir,
+      });
+      const customEntry = results.find((e) => e.path === customFile);
+      const defaultEntry = results.find((e) => e.path === defaultFile);
+
+      assert.equal(customEntry?.action, "trash");
+      assert.equal(customEntry?.category, "sessions");
+      assert.equal(defaultEntry, undefined);
+    });
+  });
+
+  it("resolves the OMP session dir from the mac-optimize config file", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const confDir = path.join(homeDir, ".config", "mac-optimize");
+      const confFile = path.join(confDir, "omp-session-dir.conf");
+      const customDir = path.join(homeDir, "config-sessions");
+      const customFile = path.join(customDir, "old-session.jsonl");
+
+      await writeOldFile(customFile, '{"session":"old"}\n');
+      await mkdir(confDir, { recursive: true });
+      await writeFile(confFile, `OMP_SESSION_DIR=${customDir}\n`);
+
+      const results = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+      const customEntry = results.find((e) => e.path === customFile);
+
+      assert.equal(customEntry?.action, "trash");
+      assert.equal(customEntry?.category, "sessions");
+
+      await rm(confFile, { force: true });
+    });
+  });
+
+  it("prefers OMP_SESSION_DIR env over the config file and the flag over both", async () => {
+    await withFakeRoots(async ({ homeDir, tempDir }) => {
+      const confDir = path.join(homeDir, ".config", "mac-optimize");
+      const confFile = path.join(confDir, "omp-session-dir.conf");
+      const envDir = path.join(homeDir, "env-sessions");
+      const flagDir = path.join(homeDir, "flag-sessions");
+      const confDirFiles = path.join(homeDir, "conf-sessions");
+
+      await mkdir(confDir, { recursive: true });
+      await writeFile(confFile, `OMP_SESSION_DIR=${confDirFiles}\n`);
+      for (const [dir, name] of [[envDir, "env.jsonl"], [flagDir, "flag.jsonl"], [confDirFiles, "conf.jsonl"]]) {
+        await writeOldFile(path.join(dir, name), '{"session":"old"}\n');
+      }
+
+      process.env.OMP_SESSION_DIR = envDir;
+      try {
+        const envResults = await scanRemnants(scanOptions({ homeDir, tempDir, includeCache: false }));
+        assert.ok(envResults.find((e) => e.path === path.join(envDir, "env.jsonl")), "env dir scanned");
+        assert.ok(!envResults.find((e) => e.path === path.join(confDirFiles, "conf.jsonl")), "config dir skipped when env set");
+
+        const flagResults = await scanRemnants({
+          ...scanOptions({ homeDir, tempDir, includeCache: false }),
+          ompSessionsDir: flagDir,
+        });
+        assert.ok(flagResults.find((e) => e.path === path.join(flagDir, "flag.jsonl")), "flag dir scanned");
+        assert.ok(!flagResults.find((e) => e.path === path.join(envDir, "env.jsonl")), "env dir skipped when flag set");
+      } finally {
+        delete process.env.OMP_SESSION_DIR;
+        await rm(confFile, { force: true });
+      }
     });
   });
 

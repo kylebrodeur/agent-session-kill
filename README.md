@@ -95,7 +95,7 @@ Rows that are protected or kept are visible but not selectable.
 | `--json` | Print JSON. Always non-interactive. | off |
 | `--delegates` | Run delegated dry-runs (`claude project purge`, `omp worktree clear`). | off |
 | `--home <path>` | Home directory to scan. | current user home |
-| `--temp <path>` | Temp directory to scan. | OS temp dir |
+| `--omp-sessions-dir <path>` | Explicit OMP session store. Default: `$OMP_SESSION_DIR`/`$PI_CODING_AGENT_SESSION_DIR` env, then `~/.config/mac-optimize/omp-session-dir.conf`, then `~/.omp/agent/sessions`. | auto |
 | `--workspace <path>` | Workspace directory; OMP sessions for projects no longer on disk are flagged as orphaned and trashed regardless of age (scans 2 levels deep). | off |
 | `--dry-run` | Force dry-run mode. | off |
 | `--apply` | Apply cleanup in `clean` mode. | off |

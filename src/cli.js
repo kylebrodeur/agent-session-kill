@@ -68,6 +68,7 @@ export function buildProgram() {
     .option("--delegates", "run delegate dry-run cleanup commands", false)
     .option("--home <path>", "home directory to scan", os.homedir())
     .option("--temp <path>", "temp directory to scan", os.tmpdir())
+    .option("--omp-sessions-dir <path>", "explicit OMP session store (default: env/config resolution)")
     .option("--workspace <path>", "workspace directory for orphan detection")
     .option("--dry-run", "force dry-run mode", false)
     .option("--permanent", "permanently delete instead of trash", false);
@@ -122,6 +123,7 @@ export function parseCliArgs(argv) {
     dryRun: parsed.dryRun,
     tools: parsed.tool.length > 0 ? new Set(parsed.tool) : new Set(TOOLS),
     workspaceDir: parsed.workspace,
+    ompSessionsDir: parsed.ompSessionsDir,
   };
 
   if (options.dryRun) {
@@ -171,6 +173,7 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
       permanent: options.permanent,
       tools: options.tools,
       workspaceDir: options.workspaceDir,
+      ompSessionsDir: options.ompSessionsDir,
     }, {
       stdin,
       stdout,
@@ -188,6 +191,7 @@ export async function main(argv = process.argv.slice(2), io = { stdin: process.s
     permanent: options.permanent,
     tools: options.tools,
     workspaceDir: options.workspaceDir,
+    ompSessionsDir: options.ompSessionsDir,
   });
 
   if (args.command === "clean" && !options.apply) {

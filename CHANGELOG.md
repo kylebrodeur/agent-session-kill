@@ -4,6 +4,21 @@ All notable changes to **agent-session-kill** are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+
+### Added
+- **Configurable OMP session store.** OMP session transcripts can live
+  outside `~/.omp/agent/sessions` (e.g. relocated to a larger internal volume
+  via an omp wrapper that sets `PI_CODING_AGENT_SESSION_DIR`). The scanner
+  previously hardcoded the default path and silently skipped redirected
+  sessions. Resolution order: `--omp-sessions-dir` flag, then
+  `OMP_SESSION_DIR` / `PI_CODING_AGENT_SESSION_DIR` env, then
+  `~/.config/mac-optimize/omp-session-dir.conf` (`OMP_SESSION_DIR=` line),
+  then the `~/.omp/agent/sessions` default. Orphan detection follows the same
+  resolved root.
+- Three scanner tests: flag-based resolution, config-file resolution, and
+  the full precedence chain (flag > env > config).
+
 ## [0.2.1]
 
 ### Fixed
@@ -30,5 +45,6 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   coverage of Claude Code, Pi/pi-mono, Oh My Pi, GitHub Copilot Chat, and
   subagent temp storage. (Non-functional as installed — see 0.2.1.)
 
+[0.3.0]: https://github.com/kylebrodeur/agent-session-kill/releases/tag/v0.3.0
 [0.2.1]: https://github.com/kylebrodeur/agent-session-kill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/kylebrodeur/agent-session-kill/releases/tag/v0.2.0
