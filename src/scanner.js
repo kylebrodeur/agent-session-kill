@@ -1,7 +1,30 @@
+import { readFileSync } from "node:fs";
 import { lstat, readdir } from "node:fs/promises";
 import path from "node:path";
 import { isOlderThan } from "./age.js";
 import { classifyPath, isProtectedPath } from "./protection.js";
+
+function resolveOmpSessionsDir(options, homeDir) {
+  // Same precedence omp itself uses for PI_CODING_AGENT_SESSION_DIR consumers:
+  // explicit env override, then the persisted mac-optimize config, then default.
+  if (options.ompSessionsDir) return path.resolve(options.ompSessionsDir);
+  const env = process.env.OMP_SESSION_DIR || process.env.PI_CODING_AGENT_SESSION_DIR;
+  if (env) return path.resolve(env);
+  try {
+    const conf = path.join(homeDir, ".config", "mac-optimize", "omp-session-dir.conf");
+    const text = readFileSync(conf, "utf8");
+    const m = text.match(/^OMP_SESSION_DIR\s*=\s*(.+)$/m);
+    if (m) {
+      const v = m[1].trim().replace(/^["']|["']$/g, "");
+      if (v) return path.resolve(expandHome(v, homeDir));
+    }
+  } catch {}
+  return path.join(homeDir, ".omp", "agent", "sessions");
+}
+
+function expandHome(v, homeDir) {
+  return v.startsWith("~") ? path.join(homeDir, v.slice(1)) : v;
+}
 
 function buildRoots(options) {
   const homeDir = path.resolve(options.homeDir);
@@ -14,6 +37,7 @@ function buildRoots(options) {
     process.platform === "darwin"
       ? path.join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "github.copilot-chat")
       : path.join(homeDir, ".config", "Code", "User", "globalStorage", "github.copilot-chat");
+  const ompSessionsDir = resolveOmpSessionsDir(options, homeDir);
 
   return {
     homeDir,
@@ -23,6 +47,7 @@ function buildRoots(options) {
     ompDir,
     ompAgentDir,
     copilotChatDir,
+    ompSessionsDir,
   };
 }
 
@@ -50,7 +75,7 @@ function staticCandidates(options, roots) {
 
   if (selected(options, "omp")) {
     candidates.push(
-      { tool: "omp", category: "sessions", root: path.join(roots.ompAgentDir, "sessions") },
+      { tool: "omp", category: "sessions", root: roots.ompSessionsDir },
       { tool: "omp", category: "terminal-sessions", root: path.join(roots.ompAgentDir, "terminal-sessions") },
       { tool: "omp", category: "logs", root: path.join(roots.ompDir, "logs") },
       { tool: "omp", category: "blobs", root: path.join(roots.ompAgentDir, "blobs") },
@@ -151,7 +176,7 @@ async function buildWorkspaceProjectIndex(workspaceDir, homeDir) {
 
 async function findOrphanedOmpSessionDirs(roots, workspaceDir, errors) {
   const orphaned = new Set();
-  const sessionsRoot = path.join(roots.ompAgentDir, "sessions");
+  const sessionsRoot = roots.ompSessionsDir;
   let dirents;
   try {
     dirents = await readdir(sessionsRoot, { withFileTypes: true });
